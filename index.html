@@ -3,62 +3,96 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bot Paper — Dashboard</title>
+<title>Bot Paper — Santé du portefeuille</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 16px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0d1117; color: #e6edf3; max-width: 760px; margin-inline: auto;
+    background: #0d1117; color: #e6edf3; max-width: 820px; margin-inline: auto;
   }
   h1 { font-size: 1.3rem; margin: 0 0 4px; }
   .sub { color: #8b949e; font-size: 0.85rem; margin-bottom: 16px; }
   .card {
-    background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
     padding: 16px; margin-bottom: 14px;
   }
-  .card h2 { font-size: 0.95rem; color: #8b949e; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card h2 { font-size: 0.9rem; color: #8b949e; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.04em; }
   .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
   .row .k { color: #8b949e; font-size: 0.85rem; }
   .row .v { font-weight: 600; }
-  .big { font-size: 1.8rem; font-weight: 700; }
   .up { color: #3fb950; } .down { color: #f85149; } .flat { color: #8b949e; }
   table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
   th, td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #21262d; white-space: nowrap; }
   th { color: #8b949e; font-weight: 500; }
   td.num, th.num { text-align: right; }
-  pre { white-space: pre-wrap; font-size: 0.78rem; color: #c9d1d9; max-height: 240px; overflow-y: auto; }
   input, button {
     font: inherit; background: #0d1117; color: #e6edf3; border: 1px solid #30363d;
     border-radius: 6px; padding: 8px 10px;
   }
   button { background: #238636; border-color: #238636; cursor: pointer; }
   button.secondary { background: transparent; border-color: #30363d; color: #8b949e; }
-  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
   #gate { display: flex; flex-direction: column; gap: 10px; }
   #gate p { color: #8b949e; font-size: 0.85rem; line-height: 1.5; }
   #err { color: #f85149; font-size: 0.85rem; }
   a { color: #58a6ff; }
-  .pill { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; display: inline-block; }
-  .pill.ouvert { background: #10233a; color: #58a6ff; }
-  .pill.conserver { background: #133a1f; color: #3fb950; }
-  .pill.surveiller { background: #3a2e13; color: #d29922; }
-  .pill.neutre { background: #21262d; color: #8b949e; }
-  .disc { font-size: 0.72rem; color: #6e7681; margin-top: 8px; line-height: 1.4; }
+  .disc { font-size: 0.72rem; color: #6e7681; margin-top: 10px; line-height: 1.4; }
+
+  /* Santé globale */
+  .health { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .gauge-wrap { text-align: center; }
+  .gauge-num { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+  .gauge-max { font-size: 0.8rem; color: #8b949e; }
+  .health-txt { flex: 1; min-width: 200px; }
+  .verdict { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+  .counters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .counter { padding: 6px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; }
+  .counter.bon { background: #10281a; color: #3fb950; }
+  .counter.surv { background: #2b230f; color: #d29922; }
+  .counter.corr { background: #2b1414; color: #f85149; }
+
+  /* Priorités */
+  .prio { border-left: 3px solid #f85149; padding: 8px 12px; margin-bottom: 8px; background: #1a1113; border-radius: 0 8px 8px 0; }
+  .prio .t { font-weight: 700; margin-bottom: 2px; }
+  .prio .a { font-size: 0.82rem; color: #c9d1d9; }
+
+  /* Cartes positions */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .pos {
+    border: 1px solid #30363d; border-left-width: 4px; border-radius: 10px; padding: 11px 13px;
+    background: #0f141b;
+  }
+  .pos.BON { border-left-color: #3fb950; }
+  .pos.SURVEILLER { border-left-color: #d29922; }
+  .pos.CORRIGER { border-left-color: #f85149; }
+  .pos.INCONNU { border-left-color: #6e7681; }
+  .pos .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .pos .sym { font-weight: 700; font-size: 0.95rem; }
+  .pos .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  .pos.BON .badge { background: #10281a; color: #3fb950; }
+  .pos.SURVEILLER .badge { background: #2b230f; color: #d29922; }
+  .pos.CORRIGER .badge { background: #2b1414; color: #f85149; }
+  .pos.INCONNU .badge { background: #21262d; color: #8b949e; }
+  .pos .nom { font-size: 0.72rem; color: #8b949e; margin-bottom: 7px; }
+  .pos .meta { display: flex; gap: 10px; font-size: 0.74rem; color: #8b949e; margin-bottom: 7px; flex-wrap: wrap; }
+  .pos .meta b { color: #e6edf3; font-weight: 600; }
+  .pos .act { font-size: 0.78rem; line-height: 1.35; color: #c9d1d9; }
+  .typebadge { font-size: 0.64rem; color: #6e7681; border: 1px solid #30363d; border-radius: 4px; padding: 0 5px; margin-left: 6px; }
 </style>
 </head>
 <body>
 
-<h1>Bot Paper — Portefeuille multi-actifs</h1>
+<h1>Bot Paper — Santé de mes positions</h1>
 <div class="sub" id="repoLabel"></div>
 
 <div id="gate" class="card">
   <h2>Connexion</h2>
   <p>
     Colle un <b>token GitHub personnel</b> (fine-grained), en lecture seule sur le
-    dépôt <b>bot-paper</b>. Il reste dans ce navigateur (localStorage), jamais
-    envoyé ailleurs qu'à l'API GitHub.<br>
+    dépôt <b>bot-paper</b>. Il reste dans ce navigateur, jamais envoyé ailleurs qu'à
+    l'API GitHub.<br>
     <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">
       Créer un token</a> → "Only select repositories" → bot-paper →
     permission "Contents: Read-only".
@@ -72,29 +106,25 @@
   <div class="toolbar">
     <button id="refresh" class="secondary">Rafraîchir</button>
     <button id="forget" class="secondary">Oublier le token</button>
+    <span class="sub" id="majLabel" style="margin:0"></span>
   </div>
 
-  <div class="card" id="summaryCard"></div>
+  <div class="card" id="healthCard"></div>
+  <div class="card" id="prioCard"></div>
   <div class="card">
-    <h2>Courbe de capital (simulation)</h2>
-    <svg id="chart" viewBox="0 0 600 200" style="width:100%; height:auto;"></svg>
-  </div>
-  <div class="card">
-    <h2>Positions simulées</h2>
-    <div id="positionsBox">Chargement…</div>
-  </div>
-  <div class="card">
-    <h2>Recos du jour — mes vraies positions</h2>
-    <div id="recosBox">Chargement…</div>
+    <h2>Toutes mes positions <span style="text-transform:none;font-weight:400">(triées : à corriger en premier)</span></h2>
+    <div id="cardsBox">Chargement…</div>
     <div class="disc">
-      Signaux mécaniques (croisement de moyennes + RSI) calculés automatiquement.
-      <b>Ce n'est pas un conseil financier</b> — simple lecture d'indicateurs,
-      la décision reste 100 % la tienne. Aucune quantité ni prix d'achat n'est stocké.
+      Score de santé 0-100 basé sur tendance (croisement de moyennes), momentum, RSI
+      et repli depuis les plus-hauts, adapté à ton profil <b id="profilLabel">actif</b>.
+      <b>Ce n'est pas un conseil financier</b> — signaux mécaniques et faillibles, la
+      décision reste 100 % la tienne. Aucune quantité ni prix d'achat n'est utilisé.
     </div>
   </div>
-  <div class="card">
-    <h2>Derniers trades simulés</h2>
-    <div id="tradesBox">Chargement…</div>
+
+  <div class="card" id="simCard">
+    <h2>Portefeuille simulé (paper) <span style="text-transform:none;font-weight:400">— capital virtuel</span></h2>
+    <div id="simBox">Chargement…</div>
   </div>
 </div>
 
@@ -102,11 +132,11 @@
 const REPO = "rm152026/bot-paper";
 document.getElementById("repoLabel").textContent = REPO + " · lecture directe via l'API GitHub";
 const TOKEN_KEY = "bot_paper_pat";
+const COL = { BON: "#3fb950", SURVEILLER: "#d29922", CORRIGER: "#f85149", INCONNU: "#6e7681" };
 
 function b64ToUtf8(b64) {
   const bin = atob(b64.replace(/\n/g, ""));
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder("utf-8").decode(bytes);
+  return new TextDecoder("utf-8").decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
 }
 async function ghGetFile(path) {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -115,124 +145,136 @@ async function ghGetFile(path) {
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
-  const data = await res.json();
-  return b64ToUtf8(data.content);
+  return b64ToUtf8((await res.json()).content);
 }
 function parseCSV(text) {
   const lines = text.trim().split("\n");
   const headers = lines[0].split(",");
-  return lines.slice(1).map(line => {
-    const cells = line.split(",");
-    const obj = {}; headers.forEach((h, i) => obj[h] = cells[i]); return obj;
-  });
+  return lines.slice(1).map(l => { const c = l.split(","); const o = {}; headers.forEach((h, i) => o[h] = c[i]); return o; });
 }
 function cls(x) { return x > 0 ? "up" : x < 0 ? "down" : "flat"; }
-function sign(x) { return (x >= 0 ? "+" : "") + x.toFixed(1); }
 
-function renderSummary(etat, equityRows) {
-  const box = document.getElementById("summaryCard");
-  if (!etat) { box.innerHTML = "<h2>Portefeuille</h2><p>Pas encore d'état (le bot n'a pas encore tourné).</p>"; return; }
+function gaugeSVG(score) {
+  const col = score >= 65 ? COL.BON : score >= 50 ? COL.SURVEILLER : COL.CORRIGER;
+  const R = 52, CX = 60, CY = 60;
+  const frac = Math.max(0, Math.min(100, score)) / 100;
+  const a0 = Math.PI, a1 = Math.PI * (1 - frac); // 180° -> 0°
+  const pt = a => [CX + R * Math.cos(a), CY - R * Math.sin(a)];
+  const [sx, sy] = pt(a0), [ex, ey] = pt(a1);
+  const large = frac > 0.5 ? 1 : 0;
+  const [bx, by] = pt(0);
+  return `
+    <svg viewBox="0 0 120 72" width="150" style="display:block">
+      <path d="M ${sx} ${sy} A ${R} ${R} 0 1 1 ${bx} ${by}" fill="none" stroke="#21262d" stroke-width="10" stroke-linecap="round"/>
+      <path d="M ${sx} ${sy} A ${R} ${R} 0 ${large} 1 ${ex} ${ey}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"/>
+    </svg>`;
+}
+
+function renderHealth(reco) {
+  const box = document.getElementById("healthCard");
+  const g = reco && reco.global ? reco.global : null;
+  document.getElementById("profilLabel").textContent = reco ? (reco.profil || "actif") : "actif";
+  document.getElementById("majLabel").textContent = reco ? ("MAJ recos : " + reco.maj) : "";
+  if (!g || g.score == null) {
+    box.innerHTML = "<h2>Santé globale</h2><p>Pas encore de recos (généré 1×/jour, ~08h Paris).</p>";
+    return;
+  }
+  const col = g.score >= 65 ? COL.BON : g.score >= 50 ? COL.SURVEILLER : COL.CORRIGER;
+  box.innerHTML = `
+    <h2>Santé globale de mes positions</h2>
+    <div class="health">
+      <div class="gauge-wrap">
+        ${gaugeSVG(g.score)}
+        <div class="gauge-num" style="color:${col}">${g.score}</div>
+        <div class="gauge-max">/ 100</div>
+      </div>
+      <div class="health-txt">
+        <div class="verdict" style="color:${col}">${g.verdict}</div>
+        <div class="counters">
+          <span class="counter bon">🟢 ${g.nb_bon} bonnes</span>
+          <span class="counter surv">🟠 ${g.nb_surveiller} à surveiller</span>
+          <span class="counter corr">🔴 ${g.nb_corriger} à corriger</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPrio(reco) {
+  const box = document.getElementById("prioCard");
+  if (!reco || !reco.items) { box.style.display = "none"; return; }
+  const prio = reco.items
+    .filter(it => it.categorie === "CORRIGER" || it.categorie === "SURVEILLER")
+    .sort((a, b) => (a.score ?? 999) - (b.score ?? 999)).slice(0, 3);
+  if (!prio.length) {
+    box.innerHTML = `<h2>À corriger en priorité</h2><p style="color:#3fb950">Rien d'urgent — tout est au vert 🎉</p>`;
+    return;
+  }
+  box.innerHTML = `<h2>À corriger en priorité</h2>` + prio.map(it => `
+    <div class="prio">
+      <div class="t">${it.symbol} <span style="color:#8b949e;font-weight:400">${it.score}/100</span></div>
+      <div class="a">${it.action}</div>
+    </div>`).join("");
+}
+
+function arrow(t) { return t === "haussiere" ? '<span class="up">↗ hausse</span>' : t === "baissiere" ? '<span class="down">↘ baisse</span>' : "—"; }
+
+function renderCards(reco) {
+  const box = document.getElementById("cardsBox");
+  if (!reco || !reco.items || !reco.items.length) { box.innerHTML = "<p>—</p>"; return; }
+  const items = [...reco.items].sort((a, b) => (a.score ?? 999) - (b.score ?? 999));
+  box.innerHTML = `<div class="cards">` + items.map(it => `
+    <div class="pos ${it.categorie}">
+      <div class="head">
+        <div class="sym">${it.symbol}<span class="typebadge">${it.type || ""}</span></div>
+        <div class="badge">${it.score != null ? it.score : "—"}</div>
+      </div>
+      <div class="nom">${(it.nom || "").slice(0, 30)}</div>
+      <div class="meta">
+        <span><b>${it.prix != null ? it.prix.toFixed(2) : "—"}</b></span>
+        <span>${arrow(it.tendance)}</span>
+        <span>RSI <b>${it.rsi != null ? it.rsi.toFixed(0) : "—"}</b></span>
+      </div>
+      <div class="act">${it.action || ""}</div>
+    </div>`).join("") + `</div>`;
+}
+
+function renderSim(etat, equityRows, tradesText) {
+  const box = document.getElementById("simBox");
+  if (!etat) { box.innerHTML = "<p>Pas encore d'état simulé.</p>"; return; }
   const capital = etat.capital_total || 100;
   const positions = Object.values(etat.positions || {});
-  const dernier = equityRows.length ? parseFloat(equityRows[equityRows.length - 1].valeur_eur) : capital;
-  const perf = ((dernier - capital) / capital) * 100;
+  const val = equityRows.length ? parseFloat(equityRows[equityRows.length - 1].valeur_eur) : capital;
+  const perf = ((val - capital) / capital) * 100;
   const ouvertes = positions.filter(p => p.en_position).length;
-  box.innerHTML = `
-    <h2>Portefeuille simulé — ${positions.length} actifs</h2>
-    <div class="row"><span class="k">Valeur actuelle</span><span class="v big ${cls(perf)}">${dernier.toFixed(2)} €</span></div>
-    <div class="row"><span class="k">Performance</span><span class="v ${cls(perf)}">${sign(perf)}%</span></div>
-    <div class="row"><span class="k">Capital de départ</span><span class="v">${capital.toFixed(2)} €</span></div>
-    <div class="row"><span class="k">Positions ouvertes</span><span class="v">${ouvertes} / ${positions.length}</span></div>
-    <div class="row"><span class="k">Dernière MAJ</span><span class="v">${etat.maj || "—"}</span></div>
-  `;
-}
-function renderChart(rows) {
-  const svg = document.getElementById("chart");
-  if (!rows.length) { svg.innerHTML = `<text x="10" y="100" fill="#8b949e" font-size="12">Pas encore de données.</text>`; return; }
-  const values = rows.map(r => parseFloat(r.valeur_eur));
-  const min = Math.min(...values), max = Math.max(...values);
-  const pad = (max - min) * 0.1 || 1, lo = min - pad, hi = max + pad, w = 600, h = 200;
-  const pts = values.map((v, i) => {
-    const x = (i / Math.max(values.length - 1, 1)) * w;
-    const y = h - ((v - lo) / (hi - lo)) * h;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="#58a6ff" stroke-width="2"/>`;
-}
-function renderPositions(etat) {
-  const box = document.getElementById("positionsBox");
-  if (!etat) { box.innerHTML = "<p>—</p>"; return; }
-  const positions = Object.values(etat.positions || {});
-  box.innerHTML = `
-    <table>
-      <tr><th>Actif</th><th>Marché</th><th>État</th><th class="num">Prix d'achat</th></tr>
-      ${positions.map(p => `
-        <tr>
-          <td>${p.symbol}</td>
-          <td>${p.marche}</td>
-          <td>${p.en_position ? '<span class="pill ouvert">EN POSITION</span>' : '<span class="pill neutre">hors marché</span>'}</td>
-          <td class="num">${p.prix_achat ? p.prix_achat.toFixed(2) : "—"}</td>
-        </tr>`).join("")}
+  let trades = "";
+  if (tradesText) {
+    const rows = parseCSV(tradesText).slice(-6).reverse();
+    trades = `<table style="margin-top:10px">
+      <tr><th>Date</th><th>Actif</th><th>Type</th><th>Motif</th><th class="num">P&L</th></tr>
+      ${rows.map(t => `<tr><td>${t.date}</td><td>${t.symbol}</td><td>${t.type}</td><td>${t.motif || "—"}</td>
+        <td class="num ${t.pnl_eur ? cls(parseFloat(t.pnl_eur)) : ""}">${t.pnl_eur ? parseFloat(t.pnl_eur).toFixed(2) + " €" : "—"}</td></tr>`).join("")}
     </table>`;
-}
-function pillReco(verdict) {
-  const v = (verdict || "").toLowerCase();
-  if (v.startsWith("conserver")) return "conserver";
-  if (v.startsWith("surveiller")) return "surveiller";
-  return "neutre";
-}
-function renderRecos(reco) {
-  const box = document.getElementById("recosBox");
-  if (!reco || !reco.items || !reco.items.length) {
-    box.innerHTML = "<p>Pas encore de recos (généré une fois par jour, ~08h Paris).</p>"; return;
   }
   box.innerHTML = `
-    <div class="sub" style="margin-bottom:8px">MAJ : ${reco.maj}</div>
-    <table>
-      <tr><th>Actif</th><th class="num">Prix</th><th>Tendance</th><th class="num">RSI</th><th>Signal</th></tr>
-      ${reco.items.map(it => `
-        <tr>
-          <td>${it.symbol}</td>
-          <td class="num">${it.prix != null ? it.prix.toFixed(2) : "—"}</td>
-          <td>${it.tendance || "—"}</td>
-          <td class="num">${it.rsi != null ? it.rsi.toFixed(0) : "—"}</td>
-          <td><span class="pill ${pillReco(it.verdict)}">${it.verdict}</span></td>
-        </tr>`).join("")}
-    </table>`;
-}
-function renderTrades(text) {
-  const box = document.getElementById("tradesBox");
-  if (!text) { box.innerHTML = "<p>Aucun trade simulé pour l'instant.</p>"; return; }
-  const rows = parseCSV(text).slice(-12).reverse();
-  box.innerHTML = `
-    <table>
-      <tr><th>Date</th><th>Actif</th><th>Type</th><th class="num">Prix</th><th>Motif</th><th class="num">P&L</th></tr>
-      ${rows.map(t => `
-        <tr>
-          <td>${t.date}</td><td>${t.symbol}</td><td>${t.type}</td>
-          <td class="num">${parseFloat(t.prix).toFixed(2)}</td>
-          <td>${t.motif || "—"}</td>
-          <td class="num ${t.pnl_eur ? cls(parseFloat(t.pnl_eur)) : ''}">${t.pnl_eur ? parseFloat(t.pnl_eur).toFixed(2) + " €" : "—"}</td>
-        </tr>`).join("")}
-    </table>`;
+    <div class="row"><span class="k">Valeur (${positions.length} actifs)</span><span class="v ${cls(perf)}">${val.toFixed(2)} € (${perf >= 0 ? "+" : ""}${perf.toFixed(1)}%)</span></div>
+    <div class="row"><span class="k">Positions ouvertes</span><span class="v">${ouvertes} / ${positions.length}</span></div>
+    ${trades}`;
 }
 
 async function load() {
   document.getElementById("err").textContent = "";
   try {
-    const [etatT, equityT, tradesT, recoT] = await Promise.all([
+    const [recoT, etatT, equityT, tradesT] = await Promise.all([
+      ghGetFile("reco_du_jour.json"),
       ghGetFile("etat_portefeuille.json"),
       ghGetFile("equity_portefeuille.csv"),
       ghGetFile("journal_portefeuille.csv"),
-      ghGetFile("reco_du_jour.json"),
     ]);
-    const etat = etatT ? JSON.parse(etatT) : null;
-    const equityRows = equityT ? parseCSV(equityT) : [];
-    renderSummary(etat, equityRows);
-    renderChart(equityRows);
-    renderPositions(etat);
-    renderRecos(recoT ? JSON.parse(recoT) : null);
-    renderTrades(tradesT);
+    const reco = recoT ? JSON.parse(recoT) : null;
+    renderHealth(reco);
+    renderPrio(reco);
+    renderCards(reco);
+    renderSim(etatT ? JSON.parse(etatT) : null, equityT ? parseCSV(equityT) : [], tradesT);
   } catch (e) {
     document.getElementById("err").textContent = "Erreur : " + e.message + " (token invalide/expiré, ou fichier introuvable ?)";
   }
@@ -245,12 +287,9 @@ function showApp() {
 document.getElementById("saveToken").addEventListener("click", () => {
   const t = document.getElementById("tokenInput").value.trim();
   if (!t) return;
-  localStorage.setItem(TOKEN_KEY, t);
-  showApp();
+  localStorage.setItem(TOKEN_KEY, t); showApp();
 });
-document.getElementById("forget").addEventListener("click", () => {
-  localStorage.removeItem(TOKEN_KEY); location.reload();
-});
+document.getElementById("forget").addEventListener("click", () => { localStorage.removeItem(TOKEN_KEY); location.reload(); });
 document.getElementById("refresh").addEventListener("click", load);
 if (localStorage.getItem(TOKEN_KEY)) showApp();
 </script>
