@@ -10,8 +10,7 @@
   body {
     margin: 0; padding: 16px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0d1117; color: #e6edf3;
-    max-width: 720px; margin-inline: auto;
+    background: #0d1117; color: #e6edf3; max-width: 760px; margin-inline: auto;
   }
   h1 { font-size: 1.3rem; margin: 0 0 4px; }
   .sub { color: #8b949e; font-size: 0.85rem; margin-bottom: 16px; }
@@ -24,11 +23,12 @@
   .row .k { color: #8b949e; font-size: 0.85rem; }
   .row .v { font-weight: 600; }
   .big { font-size: 1.8rem; font-weight: 700; }
-  .up { color: #3fb950; } .down { color: #f85149; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  th, td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #21262d; }
+  .up { color: #3fb950; } .down { color: #f85149; } .flat { color: #8b949e; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th, td { text-align: left; padding: 5px 4px; border-bottom: 1px solid #21262d; white-space: nowrap; }
   th { color: #8b949e; font-weight: 500; }
-  pre { white-space: pre-wrap; font-size: 0.78rem; color: #c9d1d9; max-height: 260px; overflow-y: auto; }
+  td.num, th.num { text-align: right; }
+  pre { white-space: pre-wrap; font-size: 0.78rem; color: #c9d1d9; max-height: 240px; overflow-y: auto; }
   input, button {
     font: inherit; background: #0d1117; color: #e6edf3; border: 1px solid #30363d;
     border-radius: 6px; padding: 8px 10px;
@@ -36,27 +36,28 @@
   button { background: #238636; border-color: #238636; cursor: pointer; }
   button.secondary { background: transparent; border-color: #30363d; color: #8b949e; }
   .toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-  .toolbar input[type=text] { flex: 1; min-width: 100px; }
-  .status { font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; display: inline-block; }
-  .status.OK { background: #133a1f; color: #3fb950; }
-  .status.ATTENTION { background: #3a2e13; color: #d29922; }
-  .status.ARRET_CONSEILLE { background: #3a1313; color: #f85149; }
   #gate { display: flex; flex-direction: column; gap: 10px; }
   #gate p { color: #8b949e; font-size: 0.85rem; line-height: 1.5; }
   #err { color: #f85149; font-size: 0.85rem; }
   a { color: #58a6ff; }
+  .pill { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; display: inline-block; }
+  .pill.ouvert { background: #10233a; color: #58a6ff; }
+  .pill.conserver { background: #133a1f; color: #3fb950; }
+  .pill.surveiller { background: #3a2e13; color: #d29922; }
+  .pill.neutre { background: #21262d; color: #8b949e; }
+  .disc { font-size: 0.72rem; color: #6e7681; margin-top: 8px; line-height: 1.4; }
 </style>
 </head>
 <body>
 
-<h1>Bot Paper — Trading crypto (simulation)</h1>
+<h1>Bot Paper — Portefeuille multi-actifs</h1>
 <div class="sub" id="repoLabel"></div>
 
 <div id="gate" class="card">
   <h2>Connexion</h2>
   <p>
-    Colle un <b>token GitHub personnel</b> (fine-grained), limité en lecture seule
-    à ce dépôt. Il est stocké uniquement dans ce navigateur (localStorage), jamais
+    Colle un <b>token GitHub personnel</b> (fine-grained), en lecture seule sur le
+    dépôt <b>bot-paper</b>. Il reste dans ce navigateur (localStorage), jamais
     envoyé ailleurs qu'à l'API GitHub.<br>
     <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">
       Créer un token</a> → "Only select repositories" → bot-paper →
@@ -69,183 +70,188 @@
 
 <div id="app" style="display:none">
   <div class="toolbar">
-    <input type="text" id="symbolInput" value="BTCUSDT">
     <button id="refresh" class="secondary">Rafraîchir</button>
     <button id="forget" class="secondary">Oublier le token</button>
   </div>
 
-  <div class="card" id="statusCard"></div>
+  <div class="card" id="summaryCard"></div>
   <div class="card">
-    <h2>Courbe de capital</h2>
+    <h2>Courbe de capital (simulation)</h2>
     <svg id="chart" viewBox="0 0 600 200" style="width:100%; height:auto;"></svg>
   </div>
   <div class="card">
-    <h2>Derniers trades</h2>
-    <div id="tradesBox">Chargement…</div>
+    <h2>Positions simulées</h2>
+    <div id="positionsBox">Chargement…</div>
   </div>
   <div class="card">
-    <h2>Dernier contrôle journalier</h2>
-    <pre id="controleBox">Chargement…</pre>
+    <h2>Recos du jour — mes vraies positions</h2>
+    <div id="recosBox">Chargement…</div>
+    <div class="disc">
+      Signaux mécaniques (croisement de moyennes + RSI) calculés automatiquement.
+      <b>Ce n'est pas un conseil financier</b> — simple lecture d'indicateurs,
+      la décision reste 100 % la tienne. Aucune quantité ni prix d'achat n'est stocké.
+    </div>
+  </div>
+  <div class="card">
+    <h2>Derniers trades simulés</h2>
+    <div id="tradesBox">Chargement…</div>
   </div>
 </div>
 
 <script>
 const REPO = "rm152026/bot-paper";
 document.getElementById("repoLabel").textContent = REPO + " · lecture directe via l'API GitHub";
-
 const TOKEN_KEY = "bot_paper_pat";
-const SYMBOL_KEY = "bot_paper_symbol";
 
 function b64ToUtf8(b64) {
   const bin = atob(b64.replace(/\n/g, ""));
   const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
   return new TextDecoder("utf-8").decode(bytes);
 }
-
-async function ghGet(path) {
+async function ghGetFile(path) {
   const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
-  return res.json();
-}
-
-async function ghGetFile(path) {
-  const data = await ghGet(path);
-  if (!data) return null;
+  const data = await res.json();
   return b64ToUtf8(data.content);
 }
-
 function parseCSV(text) {
   const lines = text.trim().split("\n");
   const headers = lines[0].split(",");
   return lines.slice(1).map(line => {
     const cells = line.split(",");
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = cells[i]);
-    return obj;
+    const obj = {}; headers.forEach((h, i) => obj[h] = cells[i]); return obj;
   });
 }
+function cls(x) { return x > 0 ? "up" : x < 0 ? "down" : "flat"; }
+function sign(x) { return (x >= 0 ? "+" : "") + x.toFixed(1); }
 
-function renderStatus(etat, equityRows, symbol) {
-  const box = document.getElementById("statusCard");
-  if (!etat) {
-    box.innerHTML = `<h2>Portefeuille</h2><p>Pas encore de fichier etat_${symbol}.json (le bot n'a pas encore tourné pour ${symbol}).</p>`;
-    return;
-  }
-  const dernier = equityRows.length ? equityRows[equityRows.length - 1] : null;
-  const valeur = dernier ? parseFloat(dernier.valeur_eur) : (etat.eur + etat.crypto * (etat.prix_achat || 0));
-  const depart = 50.0;
-  const perf = ((valeur - depart) / depart) * 100;
-  const cls = perf >= 0 ? "up" : "down";
+function renderSummary(etat, equityRows) {
+  const box = document.getElementById("summaryCard");
+  if (!etat) { box.innerHTML = "<h2>Portefeuille</h2><p>Pas encore d'état (le bot n'a pas encore tourné).</p>"; return; }
+  const capital = etat.capital_total || 100;
+  const positions = Object.values(etat.positions || {});
+  const dernier = equityRows.length ? parseFloat(equityRows[equityRows.length - 1].valeur_eur) : capital;
+  const perf = ((dernier - capital) / capital) * 100;
+  const ouvertes = positions.filter(p => p.en_position).length;
   box.innerHTML = `
-    <h2>Portefeuille — ${symbol}</h2>
-    <div class="row"><span class="k">Valeur actuelle</span><span class="v big ${cls}">${valeur.toFixed(2)} €</span></div>
-    <div class="row"><span class="k">Performance</span><span class="v ${cls}">${perf >= 0 ? "+" : ""}${perf.toFixed(1)}%</span></div>
-    <div class="row"><span class="k">Position</span><span class="v">${etat.en_position ? "EN POSITION" : "hors marché"}</span></div>
-    <div class="row"><span class="k">Trades enregistrés</span><span class="v">${(etat.trades || []).length}</span></div>
+    <h2>Portefeuille simulé — ${positions.length} actifs</h2>
+    <div class="row"><span class="k">Valeur actuelle</span><span class="v big ${cls(perf)}">${dernier.toFixed(2)} €</span></div>
+    <div class="row"><span class="k">Performance</span><span class="v ${cls(perf)}">${sign(perf)}%</span></div>
+    <div class="row"><span class="k">Capital de départ</span><span class="v">${capital.toFixed(2)} €</span></div>
+    <div class="row"><span class="k">Positions ouvertes</span><span class="v">${ouvertes} / ${positions.length}</span></div>
+    <div class="row"><span class="k">Dernière MAJ</span><span class="v">${etat.maj || "—"}</span></div>
   `;
 }
-
 function renderChart(rows) {
   const svg = document.getElementById("chart");
-  svg.innerHTML = "";
-  if (!rows.length) {
-    svg.innerHTML = `<text x="10" y="100" fill="#8b949e" font-size="12">Pas encore de données.</text>`;
-    return;
-  }
+  if (!rows.length) { svg.innerHTML = `<text x="10" y="100" fill="#8b949e" font-size="12">Pas encore de données.</text>`; return; }
   const values = rows.map(r => parseFloat(r.valeur_eur));
   const min = Math.min(...values), max = Math.max(...values);
-  const pad = (max - min) * 0.1 || 1;
-  const lo = min - pad, hi = max + pad;
-  const w = 600, h = 200;
+  const pad = (max - min) * 0.1 || 1, lo = min - pad, hi = max + pad, w = 600, h = 200;
   const pts = values.map((v, i) => {
     const x = (i / Math.max(values.length - 1, 1)) * w;
     const y = h - ((v - lo) / (hi - lo)) * h;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
-  svg.innerHTML = `
-    <polyline points="${pts}" fill="none" stroke="#58a6ff" stroke-width="2"/>
-  `;
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="#58a6ff" stroke-width="2"/>`;
 }
-
-function renderTrades(text) {
-  const box = document.getElementById("tradesBox");
-  if (!text) { box.innerHTML = "<p>Aucun trade clôturé pour l'instant.</p>"; return; }
-  const rows = parseCSV(text).slice(-10).reverse();
+function renderPositions(etat) {
+  const box = document.getElementById("positionsBox");
+  if (!etat) { box.innerHTML = "<p>—</p>"; return; }
+  const positions = Object.values(etat.positions || {});
   box.innerHTML = `
     <table>
-      <tr><th>Date</th><th>Type</th><th>Prix</th><th>P&L</th></tr>
+      <tr><th>Actif</th><th>Marché</th><th>État</th><th class="num">Prix d'achat</th></tr>
+      ${positions.map(p => `
+        <tr>
+          <td>${p.symbol}</td>
+          <td>${p.marche}</td>
+          <td>${p.en_position ? '<span class="pill ouvert">EN POSITION</span>' : '<span class="pill neutre">hors marché</span>'}</td>
+          <td class="num">${p.prix_achat ? p.prix_achat.toFixed(2) : "—"}</td>
+        </tr>`).join("")}
+    </table>`;
+}
+function pillReco(verdict) {
+  const v = (verdict || "").toLowerCase();
+  if (v.startsWith("conserver")) return "conserver";
+  if (v.startsWith("surveiller")) return "surveiller";
+  return "neutre";
+}
+function renderRecos(reco) {
+  const box = document.getElementById("recosBox");
+  if (!reco || !reco.items || !reco.items.length) {
+    box.innerHTML = "<p>Pas encore de recos (généré une fois par jour, ~08h Paris).</p>"; return;
+  }
+  box.innerHTML = `
+    <div class="sub" style="margin-bottom:8px">MAJ : ${reco.maj}</div>
+    <table>
+      <tr><th>Actif</th><th class="num">Prix</th><th>Tendance</th><th class="num">RSI</th><th>Signal</th></tr>
+      ${reco.items.map(it => `
+        <tr>
+          <td>${it.symbol}</td>
+          <td class="num">${it.prix != null ? it.prix.toFixed(2) : "—"}</td>
+          <td>${it.tendance || "—"}</td>
+          <td class="num">${it.rsi != null ? it.rsi.toFixed(0) : "—"}</td>
+          <td><span class="pill ${pillReco(it.verdict)}">${it.verdict}</span></td>
+        </tr>`).join("")}
+    </table>`;
+}
+function renderTrades(text) {
+  const box = document.getElementById("tradesBox");
+  if (!text) { box.innerHTML = "<p>Aucun trade simulé pour l'instant.</p>"; return; }
+  const rows = parseCSV(text).slice(-12).reverse();
+  box.innerHTML = `
+    <table>
+      <tr><th>Date</th><th>Actif</th><th>Type</th><th class="num">Prix</th><th>Motif</th><th class="num">P&L</th></tr>
       ${rows.map(t => `
         <tr>
-          <td>${t.date}</td>
-          <td>${t.type}</td>
-          <td>${parseFloat(t.prix).toFixed(2)}</td>
-          <td>${t.pnl_eur ? parseFloat(t.pnl_eur).toFixed(2) + " €" : "—"}</td>
-        </tr>
-      `).join("")}
-    </table>
-  `;
-}
-
-async function findLatestControle(symbol) {
-  const listing = await ghGet("");
-  if (!Array.isArray(listing)) return null;
-  const matches = listing
-    .map(f => f.name)
-    .filter(n => n.startsWith(`controle_${symbol}_`) && n.endsWith(".txt"))
-    .sort();
-  if (!matches.length) return null;
-  return ghGetFile(matches[matches.length - 1]);
+          <td>${t.date}</td><td>${t.symbol}</td><td>${t.type}</td>
+          <td class="num">${parseFloat(t.prix).toFixed(2)}</td>
+          <td>${t.motif || "—"}</td>
+          <td class="num ${t.pnl_eur ? cls(parseFloat(t.pnl_eur)) : ''}">${t.pnl_eur ? parseFloat(t.pnl_eur).toFixed(2) + " €" : "—"}</td>
+        </tr>`).join("")}
+    </table>`;
 }
 
 async function load() {
-  const symbol = document.getElementById("symbolInput").value.trim() || "BTCUSDT";
-  localStorage.setItem(SYMBOL_KEY, symbol);
   document.getElementById("err").textContent = "";
   try {
-    const [etatText, equityText, tradesText, controleText] = await Promise.all([
-      ghGetFile(`etat_${symbol}.json`),
-      ghGetFile(`equity_${symbol}.csv`),
-      ghGetFile(`live_${symbol}_journal_trades.csv`),
-      findLatestControle(symbol),
+    const [etatT, equityT, tradesT, recoT] = await Promise.all([
+      ghGetFile("etat_portefeuille.json"),
+      ghGetFile("equity_portefeuille.csv"),
+      ghGetFile("journal_portefeuille.csv"),
+      ghGetFile("reco_du_jour.json"),
     ]);
-    const etat = etatText ? JSON.parse(etatText) : null;
-    const equityRows = equityText ? parseCSV(equityText) : [];
-    renderStatus(etat, equityRows, symbol);
+    const etat = etatT ? JSON.parse(etatT) : null;
+    const equityRows = equityT ? parseCSV(equityT) : [];
+    renderSummary(etat, equityRows);
     renderChart(equityRows);
-    renderTrades(tradesText);
-    document.getElementById("controleBox").textContent = controleText || "Pas encore de rapport de contrôle.";
+    renderPositions(etat);
+    renderRecos(recoT ? JSON.parse(recoT) : null);
+    renderTrades(tradesT);
   } catch (e) {
-    document.getElementById("err").textContent = "Erreur : " + e.message + " (token invalide/expiré, ou repo/fichier introuvable ?)";
+    document.getElementById("err").textContent = "Erreur : " + e.message + " (token invalide/expiré, ou fichier introuvable ?)";
   }
 }
-
 function showApp() {
   document.getElementById("gate").style.display = "none";
   document.getElementById("app").style.display = "block";
-  const savedSymbol = localStorage.getItem(SYMBOL_KEY);
-  if (savedSymbol) document.getElementById("symbolInput").value = savedSymbol;
   load();
 }
-
 document.getElementById("saveToken").addEventListener("click", () => {
   const t = document.getElementById("tokenInput").value.trim();
   if (!t) return;
   localStorage.setItem(TOKEN_KEY, t);
   showApp();
 });
-
 document.getElementById("forget").addEventListener("click", () => {
-  localStorage.removeItem(TOKEN_KEY);
-  location.reload();
+  localStorage.removeItem(TOKEN_KEY); location.reload();
 });
-
 document.getElementById("refresh").addEventListener("click", load);
-document.getElementById("symbolInput").addEventListener("change", load);
-
 if (localStorage.getItem(TOKEN_KEY)) showApp();
 </script>
 </body>
